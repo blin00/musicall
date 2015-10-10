@@ -1,17 +1,25 @@
 package com.megabit.musicall;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
+
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
     private static final int READ_REQUEST_CODE = 42;
+    private static final String TAG = "MCAL";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,7 +31,6 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(getApplicationContext(), "hi there", Toast.LENGTH_SHORT).show();
                 performFileSearch();
             }
         });
@@ -51,6 +58,37 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode,
+                                 Intent resultData) {
+
+        // The ACTION_OPEN_DOCUMENT intent was sent with the request code
+        // READ_REQUEST_CODE. If the request code seen here doesn't match, it's the
+        // response to some other intent, and the code below shouldn't run at all.
+
+        if (requestCode == READ_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            // The document selected by the user won't be returned in the intent.
+            // Instead, a URI to that document will be contained in the return intent
+            // provided to this method as a parameter.
+            // Pull that URI using resultData.getData().
+            Uri uri;
+            if (resultData != null) {
+                uri = resultData.getData();
+                Log.i(TAG, "Uri: " + uri.toString());
+                MediaPlayer mediaPlayer = new MediaPlayer();
+                mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                try {
+                    mediaPlayer.setDataSource(getApplicationContext(), uri);
+                    mediaPlayer.prepare();
+                    mediaPlayer.start();
+                    Log.i(TAG, "things work");
+                } catch (IOException e) {
+                    Log.e(TAG, "things broke");
+                }
+            }
+        }
+    }
+
     /**
      * Fires an intent to spin up the "file chooser" UI and select an image.
      */
@@ -61,8 +99,8 @@ public class MainActivity extends AppCompatActivity {
         // file (as opposed to a list of contacts or timezones)
         intent.addCategory(Intent.CATEGORY_OPENABLE);
 
-        // Filter to show only audio MIME
-        intent.setType("audio/*");
+        // Filter to show everything
+        intent.setType("*/*");
 
         startActivityForResult(intent, READ_REQUEST_CODE);
     }
