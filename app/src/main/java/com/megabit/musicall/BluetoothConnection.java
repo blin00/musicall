@@ -55,7 +55,6 @@ public class BluetoothConnection {
         listview.setAdapter(mArrayAdapter);
         mBluetoothAdapter.startDiscovery();
 
-
         // Register the BroadcastReceiver
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         mCurrActivity.registerReceiver(mReceiver, filter); // Don't forget to unregister during onDestroy
