@@ -1,38 +1,27 @@
 package com.megabit.musicall;
 
-import android.bluetooth.BluetoothAdapter;
-import android.content.Context;
-import android.content.Intent;
-
 import android.app.Activity;
-import android.bluetooth.BluetoothManager;
+import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
-
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-
 import android.widget.Toast;
 
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
-    private BluetoothManager bluetoothManager;
-    private BluetoothAdapter bluetoothAdapter;
-    BluetoothConnection btConn = null;
-    private boolean btScanning;
-    private Handler btHandler;
-    private MediaPlayer mediaPlayer;
 
-    private static final long BT_SCAN_PERIOD = 10000;
+    private MediaPlayer mediaPlayer;
+    BluetoothConnection btConn;
+
     private static final int READ_REQUEST_CODE = 42;
-    private static final int REQUEST_ENABLE_BT = 43;
+    private static final int BT_DISCOVERABILITY_REQUEST_CODE = 41;
     private static final String TAG = "MCAL";
 
     @Override
@@ -41,18 +30,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        bluetoothAdapter = bluetoothManager.getAdapter();
-        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        }
+
 
         mediaPlayer = new MediaPlayer();
 
         btConn = new BluetoothConnection(this);
         btConn.discoverDevices();
-//        receiveDiscovery();
+        btConn.receiveDiscovery();
     }
 
     @Override
@@ -126,32 +110,12 @@ public class MainActivity extends AppCompatActivity {
                 }
                 mediaPlayer.prepareAsync();
             }
+        } else if (requestCode == BT_DISCOVERABILITY_REQUEST_CODE && resultCode == Activity.RESULT_CANCELED) {
+            //TODO?
         }
     }
 
-    /**
-     * Attempts to connect to other device within BT_SCAN_PERIOD
-     * @param enable
-     */
-    /*
-    private void scanLeDevice(final boolean enable) {
-        if (enable) {
-            btHandler.postDelayed(new Runnable() {
-                //todo: change run() later
-                public void run() {
-                    btScanning = false;
-                    bluetoothAdapter.stopLeScan(mLeScanCallback);
-                }
-            }, BT_SCAN_PERIOD);
 
-            btScanning = true;
-            bluetoothAdapter.startLeScan();
-        } else {
-            btScanning = false;
-            bluetoothAdapter.stopLeScan(mLeScanCallback);
-        }
-    }
-    */
 
     /**
      * Fires an intent to spin up the "file chooser" UI and select an image.
