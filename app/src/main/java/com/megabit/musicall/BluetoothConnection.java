@@ -129,31 +129,25 @@ public class BluetoothConnection {
         }
     }
 
-    private class ListClickListener implements AdapterView.OnItemClickListener {
-        public void onItemClick(AdapterView<?> l, View v, int position, long id) {
-            System.out.println(position);
-            mSelectedDevice = mDetectedDevices.get(position);
-            BTConnect();
-        }
-    }
-
     public BluetoothConnection(Activity activity) {
         mCurrActivity = activity;
-    }
-
-    public void receiveDiscovery() {
-        Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, DISCOVERABLE_DURATION);
-        mCurrActivity.startActivity(discoverableIntent);
-    }
-
-    public void discoverDevices() {
         mBluetoothManager = (BluetoothManager) mCurrActivity.getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             mCurrActivity.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
+    }
+
+    public void receiveDiscovery() {
+        Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, DISCOVERABLE_DURATION);
+        mCurrActivity.startActivity(discoverableIntent);
+        BTAcceptThread acceptorThread = new BTAcceptThread();
+        acceptorThread.run();
+    }
+
+    public void discoverDevices() {
         mArrayAdapter = new ArrayAdapter<String>(mCurrActivity, android.R.layout.simple_list_item_1);
         mDetectedDevices = new ArrayList<>();
         Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
@@ -168,7 +162,13 @@ public class BluetoothConnection {
         }
         final ListView listview = (ListView) mCurrActivity.findViewById(R.id.listview);
         listview.setAdapter(mArrayAdapter);
-        listview.setOnItemClickListener(new ListClickListener());
+        listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> l, View v, int position, long id) {
+                System.out.println(position);
+                mSelectedDevice = mDetectedDevices.get(position);
+                BTConnect();
+            }
+        });
         mBluetoothAdapter.startDiscovery();
 
         // Register the BroadcastReceiver

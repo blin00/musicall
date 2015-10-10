@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -40,11 +41,25 @@ public class MainActivity extends AppCompatActivity {
                 performFileSearch();
             }
         });
+
         mediaPlayer = new MediaPlayer();
 
         btConn = new BluetoothConnection(this);
-        btConn.discoverDevices();
-//        btConn.receiveDiscovery();
+
+        Button receiverButton = (Button) findViewById(R.id.receiverButton);
+        Button senderButton = (Button) findViewById(R.id.senderButton);
+        receiverButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                btConn.discoverDevices();
+            }
+        });
+        senderButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                btConn.receiveDiscovery();
+            }
+        });
     }
 
     @Override
