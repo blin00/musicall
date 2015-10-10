@@ -17,18 +17,20 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
     private BluetoothManager bluetoothManager;
-    private BluetoothAdapter mBluetoothAdapter;
-    private boolean mScanning;
-    private Handler mHandler;
-    private static final long SCAN_PERIOD = 10000;
+    private BluetoothAdapter bluetoothAdapter;
+    private boolean btScanning;
+    private Handler btHandler;
+    private MediaPlayer mediaPlayer;
+
+    private static final long BT_SCAN_PERIOD = 10000;
     private static final int READ_REQUEST_CODE = 42;
     private static final int REQUEST_ENABLE_BT = 43;
-
     private static final String TAG = "MCAL";
 
     @Override
@@ -38,11 +40,13 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        mBluetoothAdapter = bluetoothManager.getAdapter();
-        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
+        bluetoothAdapter = bluetoothManager.getAdapter();
+        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
+
+        mediaPlayer = new MediaPlayer();
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -51,6 +55,12 @@ public class MainActivity extends AppCompatActivity {
                 performFileSearch();
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mediaPlayer.release();
     }
 
     @Override
@@ -69,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            mediaPlayer.stop();
             return true;
         }
 
@@ -78,7 +89,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode,
                                  Intent resultData) {
-
         // The ACTION_OPEN_DOCUMENT intent was sent with the request code
         // READ_REQUEST_CODE. If the request code seen here doesn't match, it's the
         // response to some other intent, and the code below shouldn't run at all.
@@ -92,40 +102,55 @@ public class MainActivity extends AppCompatActivity {
             if (resultData != null) {
                 uri = resultData.getData();
                 Log.i(TAG, "Uri: " + uri.toString());
-                MediaPlayer mediaPlayer = new MediaPlayer();
+                mediaPlayer.reset();
                 mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                    @Override
+                    public boolean onError(MediaPlayer mp, int what, int extra) {
+                        Toast.makeText(getApplicationContext(), "invalid music file (2)", Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "some error occurred (" + what + ", " + extra + ")");
+                        return true;
+                    }
+                });
+                mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                    @Override
+                    public void onPrepared(MediaPlayer mp) {
+                        Toast.makeText(getApplicationContext(), "music started", Toast.LENGTH_SHORT).show();
+                        mp.start();
+                    }
+                });
                 try {
                     mediaPlayer.setDataSource(getApplicationContext(), uri);
-                    mediaPlayer.prepare();
-                    mediaPlayer.start();
-                    Log.i(TAG, "things work");
                 } catch (IOException e) {
-                    Log.e(TAG, "things broke");
+                    Toast.makeText(getApplicationContext(), "invalid music file (1)", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "invalid data source");
+                    return;
                 }
+                mediaPlayer.prepareAsync();
             }
         }
     }
 
     /**
-     * Attempts to connect to other device within SCAN_PERIOD
+     * Attempts to connect to other device within BT_SCAN_PERIOD
      * @param enable
      */
     /*
     private void scanLeDevice(final boolean enable) {
         if (enable) {
-            mHandler.postDelayed(new Runnable() {
+            btHandler.postDelayed(new Runnable() {
                 //todo: change run() later
                 public void run() {
-                    mScanning = false;
-                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
+                    btScanning = false;
+                    bluetoothAdapter.stopLeScan(mLeScanCallback);
                 }
-            }, SCAN_PERIOD);
+            }, BT_SCAN_PERIOD);
 
-            mScanning = true;
-            mBluetoothAdapter.startLeScan();
+            btScanning = true;
+            bluetoothAdapter.startLeScan();
         } else {
-            mScanning = false;
-            mBluetoothAdapter.stopLeScan(mLeScanCallback);
+            btScanning = false;
+            bluetoothAdapter.stopLeScan(mLeScanCallback);
         }
     }
     */
@@ -145,5 +170,4 @@ public class MainActivity extends AppCompatActivity {
 
         startActivityForResult(intent, READ_REQUEST_CODE);
     }
-
 }
