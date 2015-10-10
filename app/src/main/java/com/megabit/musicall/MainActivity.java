@@ -1,11 +1,15 @@
 package com.megabit.musicall;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
+import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -17,13 +21,13 @@ import android.view.View;
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
-    final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+    private BluetoothManager bluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
     private boolean mScanning;
     private Handler mHandler;
     private static final long SCAN_PERIOD = 10000;
     private static final int READ_REQUEST_CODE = 42;
-
+    private static final int REQUEST_ENABLE_BT = 43;
 
     private static final String TAG = "MCAL";
 
@@ -33,9 +37,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = bluetoothManager.getAdapter();
-        if(mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
+        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
@@ -106,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
      * Attempts to connect to other device within SCAN_PERIOD
      * @param enable
      */
+    /*
     private void scanLeDevice(final boolean enable) {
         if (enable) {
             mHandler.postDelayed(new Runnable() {
@@ -117,12 +122,13 @@ public class MainActivity extends AppCompatActivity {
             }, SCAN_PERIOD);
 
             mScanning = true;
-            mBluetoothAdapter.startLeScan(mLeScanCallback);
+            mBluetoothAdapter.startLeScan();
         } else {
             mScanning = false;
             mBluetoothAdapter.stopLeScan(mLeScanCallback);
         }
     }
+    */
 
     /**
      * Fires an intent to spin up the "file chooser" UI and select an image.
