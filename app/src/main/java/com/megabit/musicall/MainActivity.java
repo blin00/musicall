@@ -222,7 +222,7 @@ public class MainActivity extends AppCompatActivity {
             bs.close();
             os.flush();
             os.close();
-            bs.close();
+
         }
     }
 }
