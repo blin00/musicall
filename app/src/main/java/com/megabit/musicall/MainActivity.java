@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -79,14 +80,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         playPauseButton.setOnClickListener(new View.OnClickListener() {
+            int pauseImg = getResources().getIdentifier("@drawable/pause", null, getPackageName());
+            int playImg = getResources().getIdentifier("@drawable/play", null, getPackageName());
             @Override
             public void onClick(View v) {
                 if(mediaPlayer.isPlaying()) {
                     mediaPlayer.pause();
-                    //playPauseButton.setImageDrawable(getResources().getDrawable(R.drawable.play));
+
+                    playPauseButton.setImageDrawable(ResourcesCompat.getDrawable(getResources(), playImg, null));
                 } else {
                     mediaPlayer.start();
-                    //playPauseButton.setImageDrawable(getResources().getDrawable(R.drawable.pause));
+                    playPauseButton.setImageDrawable(ResourcesCompat.getDrawable(getResources(), pauseImg, null));
                 }
             }
         });
