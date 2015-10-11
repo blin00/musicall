@@ -11,11 +11,6 @@
     tools:showIn="@layout/activity_main" tools:context=".MainActivity"
     android:weightSum="1">
 
-    <ListView xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/listview"
-        android:layout_width="match_parent"
-        android:layout_height="200dp" />
-
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
@@ -24,7 +19,7 @@
 
         <Button
             android:id="@+id/senderButton"
-            android:text="Sender"
+            android:text="Add Receivers"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
@@ -35,6 +30,12 @@
             android:src="@drawable/conductor" />
     </LinearLayout>
 
+    <ListView
+        android:id="@+id/receiverList"
+        android:layout_width="match_parent"
+        android:layout_height="50dp">
+    </ListView>
+
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
@@ -43,7 +44,7 @@
 
         <Button
             android:id="@+id/receiverButton"
-            android:text="Receiver"
+            android:text="Choose Sender"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
@@ -76,21 +77,21 @@
         android:layout_height="wrap_content"
         android:weightSum="1">
 
-        <ImageButton
-            android:layout_width="89dp"
-            android:layout_height="103dp"
-            android:id="@+id/stop"
-            android:src="@drawable/stopbutton"
-            android:scaleType="fitCenter" />
-
         <android.support.design.widget.FloatingActionButton
-            android:layout_width="wrap_content"
+            android:layout_width="80dp"
             android:layout_height="80dp"
             android:id="@+id/playPause"
             android:src="@drawable/play"
             android:scaleType="fitCenter"
             android:cropToPadding="false"
             android:layout_weight="0.10" />
+
+        <android.support.design.widget.FloatingActionButton
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:id="@+id/stop"
+            android:src="@drawable/stop"
+            android:scaleType="fitCenter" />
     </LinearLayout>
 
 

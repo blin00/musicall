@@ -1,5 +1,6 @@
 package com.megabit.musicall;
 
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
@@ -29,9 +30,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class BluetoothConnection {
 
-    private BluetoothAdapter mBluetoothAdapter;
-    private MainActivity mCurrActivity;
-    private BlockingQueue<Object> messageQueue;    // URI => send file; Integer => seek (-1 is pause); nothing else allowed
+    protected BluetoothAdapter mBluetoothAdapter;
+    protected MainActivity mCurrActivity;
+    protected BlockingQueue<Object> messageQueue;    // URI => send file; Integer => seek (-1 is pause); nothing else allowed
     public static final int REQUEST_ENABLE_BT = 43;
     public static final int REQUEST_ENABLE_BT_DISCOVERABLE = 44;
 
@@ -61,6 +62,7 @@ public class BluetoothConnection {
         }
     }
 
+    /*
 
 
     // server
@@ -318,4 +320,5 @@ public class BluetoothConnection {
         clientDiscovering = false;
     }
 
+    */
 }

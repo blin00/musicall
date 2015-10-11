@@ -32,7 +32,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainActivity extends AppCompatActivity {
     private MediaPlayer mediaPlayer;
-    private BluetoothConnection btConn;
+    private ClientBTConnection clientBTConn;
+    private ServerBTConnection serverBTConn;
     private TextView currentSong;
     private SeekBar seekBar;
     private Handler updateSeekHandler;
@@ -42,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     public static final int READ_REQUEST_CODE = 42;
     public static final String TAG = "Musicall";
     private FloatingActionButton playPauseButton;
+    private FloatingActionButton stopButton;
 
     private final Context context = this;
 
@@ -62,16 +64,19 @@ public class MainActivity extends AppCompatActivity {
 
         mediaPlayer = new MediaPlayer();
 
-        btConn = new BluetoothConnection(this);
+        clientBTConn = new ClientBTConnection(this);
+        serverBTConn = new ServerBTConnection(this);
 
-        Button receiverButton = (Button) findViewById(R.id.receiverButton);
-        Button senderButton = (Button) findViewById(R.id.senderButton);
+        final Button receiverButton = (Button) findViewById(R.id.receiverButton);
+        final Button senderButton = (Button) findViewById(R.id.senderButton);
 
 
-        ImageButton stopButton = (ImageButton) findViewById(R.id.stop);
+        //ImageButton stopButton = (ImageButton) findViewById(R.id.stop);
 
 
         playPauseButton = (FloatingActionButton) findViewById(R.id.playPause);
+
+        stopButton = (FloatingActionButton) findViewById(R.id.stop);
 
         receiverButton.setOnClickListener(new View.OnClickListener() {
 
@@ -81,10 +86,11 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (!started) {
                     started = true;
-                    btConn.discoverDevices();
+                    serverBTConn.endSender();
+                    clientBTConn.discoverDevices();
                 } else {
                     started = false;
-                    btConn.terminateReceiverDiscovery();
+                    clientBTConn.terminateReceiverDiscovery();
                 }
             }
         });
@@ -95,10 +101,13 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (!started) {
                     started = true;
-                    btConn.receiveDiscovery();
+                    clientBTConn.endReceiver();
+                    serverBTConn.receiveDiscovery();
+                    senderButton.setText("Done");
                 } else {
                     started = false;
-                    btConn.terminateSenderDiscovery();
+                    serverBTConn.terminateSenderDiscovery();
+                    senderButton.setText("Add Receivers");
                 }
             }
         });
@@ -169,20 +178,20 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        btConn.unregisterBroadcastReceiver();
+        clientBTConn.unregisterBroadcastReceiver();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        btConn.registerBroadcastReceiver();
+        clientBTConn.registerBroadcastReceiver();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         mediaPlayer.release();
-        btConn.unregisterBroadcastReceiver();
+        clientBTConn.unregisterBroadcastReceiver();
     }
 
     @Override
@@ -251,6 +260,8 @@ public class MainActivity extends AppCompatActivity {
         currentSong.setText("<none>");
         seekBar.setEnabled(false);
         playPauseButton.setEnabled(false);
+        stopButton.setEnabled(false);
+        stopButton.setVisibility(View.INVISIBLE);
         playPauseButton.setVisibility(View.INVISIBLE);
         playPauseButton.setImageDrawable(ResourcesCompat.getDrawable(getResources(), pauseImg, null));
         mediaPlayer.reset();
@@ -289,6 +300,8 @@ public class MainActivity extends AppCompatActivity {
                         seekBar.setMax(mediaPlayer.getDuration());
                         seekBar.setEnabled(true);
                         playPauseButton.setEnabled(true);
+                        stopButton.setEnabled(true);
+                        stopButton.setVisibility(View.VISIBLE);
                         playPauseButton.setVisibility(View.VISIBLE);
                         Toast.makeText(getApplicationContext(), "music started", Toast.LENGTH_SHORT).show();
                         mp.start();
