@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int BT_DISCOVERABILITY_REQUEST_CODE = 41;
     public static final String TAG = "Musicall";
     private FloatingActionButton playPauseButton;
+    private FloatingActionButton stopButton;
 
     private final Context context = this;
 
@@ -73,6 +74,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         playPauseButton = (FloatingActionButton) findViewById(R.id.playPause);
+
+        stopButton = (FloatingActionButton) findViewById(R.id.stop);
 
         receiverButton.setOnClickListener(new View.OnClickListener() {
 
@@ -258,6 +261,7 @@ public class MainActivity extends AppCompatActivity {
         currentSong.setText("<none>");
         seekBar.setEnabled(false);
         playPauseButton.setEnabled(false);
+        stop
         playPauseButton.setVisibility(View.INVISIBLE);
         playPauseButton.setImageDrawable(ResourcesCompat.getDrawable(getResources(), pauseImg, null));
         mediaPlayer.reset();
