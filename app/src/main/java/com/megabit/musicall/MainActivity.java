@@ -32,7 +32,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainActivity extends AppCompatActivity {
     private MediaPlayer mediaPlayer;
-    private BluetoothConnection btConn;
+    private ClientBTConnection clientBTConn;
+    private ServerBTConnection serverBTConn;
     private TextView currentSong;
     private SeekBar seekBar;
     private Handler updateSeekHandler;
@@ -63,9 +64,10 @@ public class MainActivity extends AppCompatActivity {
 
         mediaPlayer = new MediaPlayer();
 
-        btConn = new BluetoothConnection(this);
+        clientBTConn = new ClientBTConnection(this);
+        serverBTConn = new ServerBTConnection(this);
 
-        Button receiverButton = (Button) findViewById(R.id.receiverButton);
+        final Button receiverButton = (Button) findViewById(R.id.receiverButton);
         final Button senderButton = (Button) findViewById(R.id.senderButton);
 
 
@@ -82,10 +84,11 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (!started) {
                     started = true;
-                    btConn.discoverDevices();
+                    serverBTConn.endSender();
+                    clientBTConn.discoverDevices();
                 } else {
                     started = false;
-                    btConn.terminateReceiverDiscovery();
+                    clientBTConn.terminateReceiverDiscovery();
                 }
             }
         });
@@ -96,11 +99,12 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (!started) {
                     started = true;
-                    btConn.receiveDiscovery();
+                    clientBTConn.endReceiver();
+                    serverBTConn.receiveDiscovery();
                     senderButton.setText("Done");
                 } else {
                     started = false;
-                    btConn.terminateSenderDiscovery();
+                    serverBTConn.terminateSenderDiscovery();
                     senderButton.setText("Add Receivers");
                 }
             }
@@ -177,20 +181,20 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        btConn.unregisterBroadcastReceiver();
+        clientBTConn.unregisterBroadcastReceiver();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        btConn.registerBroadcastReceiver();
+        clientBTConn.registerBroadcastReceiver();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         mediaPlayer.release();
-        btConn.unregisterBroadcastReceiver();
+        clientBTConn.unregisterBroadcastReceiver();
     }
 
     @Override
