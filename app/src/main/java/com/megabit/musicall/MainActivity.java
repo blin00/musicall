@@ -188,21 +188,20 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        if (id == R.id.About) {
+        if (id == R.id.Credits) {
 
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
                     context);
 
             // set title
-            alertDialogBuilder.setTitle("About this App");
+            alertDialogBuilder.setTitle("People who contributed to this app:");
 
             // set dialog message
             alertDialogBuilder
-                    .setMessage("Syncs music across multiple phones(connected via Bluetooth) to create a Surround-Sound experience" +
-                            "\n\nCreated by: \nBrandon Lin, Zhongxia Yan \nUtsav Baral, " +
-                            "Jonathan Ngan \nEric Zhang, and Michael Zhao")
+                    .setMessage("Created by: \nBrandon Lin, Zhongxia Yan \nUtsav Baral, " +
+                            "Jonathan Ngan \nEric Zhang, and Michael Zhao\nfor Calhacks 2.0")
                     .setCancelable(true)
-                    .setNegativeButton("Okay", new DialogInterface.OnClickListener() {
+                    .setNegativeButton("Return", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             // if this button is clicked, just close
                             // the dialog box and do nothing
@@ -214,6 +213,22 @@ public class MainActivity extends AppCompatActivity {
             AlertDialog alertDialog = alertDialogBuilder.create();
 
             // show it
+            alertDialog.show();
+        }
+        if (id == R.id.About) {
+
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                    context);
+            alertDialogBuilder.setTitle("About this App");
+            alertDialogBuilder
+                    .setMessage("Syncs music across multiple phones(connected via Bluetooth) to create a Surround-Sound experience")
+                    .setCancelable(true)
+                    .setNegativeButton("Return", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                        }
+                    });
+            AlertDialog alertDialog = alertDialogBuilder.create();
             alertDialog.show();
         }
         return super.onOptionsItemSelected(item);

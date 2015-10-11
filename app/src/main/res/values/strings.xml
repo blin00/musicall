@@ -2,4 +2,5 @@
     <string name="app_name">Musicall</string>
     <string name="action_settings">Stop</string>
     <string name="About">About</string>
+    <string name ="Credits">Credits</string>
 </resources>
