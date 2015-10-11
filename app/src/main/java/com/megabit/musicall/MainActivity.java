@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
         btConn = new BluetoothConnection(this);
 
         Button receiverButton = (Button) findViewById(R.id.receiverButton);
-        Button senderButton = (Button) findViewById(R.id.senderButton);
+        final Button senderButton = (Button) findViewById(R.id.senderButton);
 
 
         ImageButton stopButton = (ImageButton) findViewById(R.id.stop);
@@ -100,9 +100,11 @@ public class MainActivity extends AppCompatActivity {
                 if (!started) {
                     started = true;
                     btConn.receiveDiscovery();
+                    senderButton.setText("Done");
                 } else {
                     started = false;
                     btConn.terminateSenderDiscovery();
+                    senderButton.setText("Add Receivers");
                 }
             }
         });
@@ -122,7 +124,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if(mediaPlayer.isPlaying()) {
                     mediaPlayer.pause();
-
                     playPauseButton.setImageDrawable(ResourcesCompat.getDrawable(getResources(), playImg, null));
                 } else {
                     mediaPlayer.start();
