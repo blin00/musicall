@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private int playImg;
     private FloatingActionButton playPauseButton;
     private FloatingActionButton stopButton;
+    private FloatingActionButton fab;
 
     public static final int READ_REQUEST_CODE = 42;
     public static final String TAG = "Musicall";
@@ -53,7 +54,9 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setVisibility(View.INVISIBLE);
+        fab.setEnabled(false);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -68,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
         final Button receiverButton = (Button) findViewById(R.id.receiverButton);
         final Button senderButton = (Button) findViewById(R.id.senderButton);
+        //fab = (FloatingActionButton) findViewById(R.id.fab);
 
         playPauseButton = (FloatingActionButton) findViewById(R.id.playPause);
 
@@ -98,6 +102,8 @@ public class MainActivity extends AppCompatActivity {
                     clientBTConn.endReceiver();
                     serverBTConn.receiveDiscovery();
                     senderButton.setText("Done");
+                    fab.setVisibility(View.VISIBLE);
+                    fab.setEnabled(true);
                 } else {
                     started = false;
                     serverBTConn.terminateSenderDiscovery();
