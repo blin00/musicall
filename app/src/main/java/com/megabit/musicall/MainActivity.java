@@ -20,7 +20,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -70,16 +69,11 @@ public class MainActivity extends AppCompatActivity {
         final Button receiverButton = (Button) findViewById(R.id.receiverButton);
         final Button senderButton = (Button) findViewById(R.id.senderButton);
 
-
-        //ImageButton stopButton = (ImageButton) findViewById(R.id.stop);
-
-
         playPauseButton = (FloatingActionButton) findViewById(R.id.playPause);
 
         stopButton = (FloatingActionButton) findViewById(R.id.stop);
 
         receiverButton.setOnClickListener(new View.OnClickListener() {
-
             private boolean started = false;
 
             @Override
@@ -151,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {
                 int progress = seekBar.getProgress();
                 Log.i(TAG, "seek to: " + progress);
-                btConn.enqueue(progress);
+                serverBTConn.enqueue(progress);
                 if (mediaPlayer != null) {
                     mediaPlayer.seekTo(progress);
                 }

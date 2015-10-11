@@ -114,11 +114,11 @@ public class ClientBTConnection extends BluetoothConnection{
 
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> l, View v, int position, long id) {
-                if (dialog.isShowing()) {
-                    dialog.dismiss();
-                }
-                mSelectedDevice = mDetectedDevices.get(position);
-                new Thread(new BTConnectThread()).start();
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
+            mSelectedDevice = mDetectedDevices.get(position);
+            new Thread(new BTConnectThread()).start();
             }
         });
         registerBroadcastReceiver();

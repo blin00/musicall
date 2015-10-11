@@ -1,29 +1,12 @@
 package com.megabit.musicall;
 
-import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothServerSocket;
-import android.bluetooth.BluetoothSocket;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.Uri;
-import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
 import android.widget.Toast;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -105,7 +88,6 @@ public class BluetoothConnection {
             mAcceptorThread = null;
         }
 
-        /** Will cancel the listening socket, and cause the thread to finish */
         public void finishAddingConnections() {
             serverDiscovering = false;
         }
@@ -258,7 +240,6 @@ public class BluetoothConnection {
             }
         }
 
-        /** Will cancel an in-progress connection, and close the socket */
         public void cancel() {
             try {
                 mSocket.close();
