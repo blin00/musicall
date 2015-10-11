@@ -1,10 +1,14 @@
 package com.megabit.musicall;
 
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.util.Log;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -19,10 +23,18 @@ public class ServerBTConnection extends BluetoothConnection {
     private volatile boolean serverDiscovering;
     private BTAcceptThread mAcceptorThread;
     private BlockingQueue<Object> messageQueue;
+    private ListView receiverList = null;
+    private static final int maxReceiverListHeight = 200;
+    private ArrayAdapter<String> mArrayAdapter = null;
+    private int currentReceiverListHeight = 0;
+
 
     public ServerBTConnection(MainActivity activity) {
         super(activity);
         messageQueue = new LinkedBlockingQueue<>();
+        receiverList = (ListView) activity.findViewById(R.id.receiverList);
+        mArrayAdapter = new ArrayAdapter<>(mCurrActivity, android.R.layout.simple_list_item_1);
+        receiverList.setAdapter(mArrayAdapter);
     }
 
     public void enqueue(Object msg) {
@@ -47,6 +59,10 @@ public class ServerBTConnection extends BluetoothConnection {
                     if (socket != null) {
                         mSockets.add(socket);
                         tmpServerSocket.close();
+                        currentReceiverListHeight = Math.min(currentReceiverListHeight + 40, maxReceiverListHeight);
+                        BluetoothDevice device = socket.getRemoteDevice();
+                        mArrayAdapter.add(Integer.toString(uuidIndex) +  ") " +  device.getName() + " " + device.getAddress());
+                        mArrayAdapter.notifyDataSetChanged();
                     }
                 } catch (IOException e) {}
 
@@ -112,6 +128,13 @@ public class ServerBTConnection extends BluetoothConnection {
         }
     }
 
+    private void setReceiverListHeight(int height) {
+        ViewGroup.LayoutParams params = receiverList.getLayoutParams();
+        params.height = height;
+        receiverList.setLayoutParams(params);
+        receiverList.requestLayout();
+    }
+
     public void endSender() {
         serverDiscovering = false;
         if (mSockets != null) {
@@ -124,5 +147,9 @@ public class ServerBTConnection extends BluetoothConnection {
             }
             mSockets = null;
         }
+        currentReceiverListHeight = 0;
+        setReceiverListHeight(currentReceiverListHeight);
+        mArrayAdapter.clear();
+        mArrayAdapter.notifyDataSetChanged();
     }
 }

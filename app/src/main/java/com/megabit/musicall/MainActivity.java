@@ -128,6 +128,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
         currentSong = (TextView) findViewById(R.id.currentSong);
         seekBar = (SeekBar) findViewById(R.id.musicSeekBar);
         resetPlayer();
