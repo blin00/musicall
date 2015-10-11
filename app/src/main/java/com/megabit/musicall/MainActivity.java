@@ -161,7 +161,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 if (mediaPlayer != null) {
-                    seekBar.setProgress(mediaPlayer.getCurrentPosition());
+                    try {
+                        seekBar.setProgress(mediaPlayer.getCurrentPosition());
+                    } catch (IllegalStateException e) {
+                        // squelch
+                    }
                 }
                 updateSeekHandler.postDelayed(this, 250);
             }
