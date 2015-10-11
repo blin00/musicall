@@ -66,7 +66,14 @@ public class MainActivity extends AppCompatActivity {
 
         Button receiverButton = (Button) findViewById(R.id.receiverButton);
         Button senderButton = (Button) findViewById(R.id.senderButton);
+
+
+        ImageButton stopButton = (ImageButton) findViewById(R.id.stop);
+
+
+
         playPauseButton = (FloatingActionButton) findViewById(R.id.playPause);
+
         receiverButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -77,6 +84,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 btConn.receiveDiscovery();
+            }
+        });
+        stopButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mediaPlayer.stop();
+                resetPlayer();
             }
         });
         playPauseButton.setOnClickListener(new View.OnClickListener() {
@@ -130,7 +144,6 @@ public class MainActivity extends AppCompatActivity {
         };
         updateSeekHandler.post(updateSeekTask);
     }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -152,11 +165,11 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        /*if (id == R.id.action_settings) {
             mediaPlayer.stop();
             resetPlayer();
             return true;
-        }
+        }*/
         if (id == R.id.About) {
 
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
@@ -188,6 +201,7 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
     private void resetPlayer() {
         currentSong.setText("<none>");
         seekBar.setEnabled(false);
@@ -195,6 +209,7 @@ public class MainActivity extends AppCompatActivity {
         playPauseButton.setVisibility(4);
         mediaPlayer.reset();
     }
+
 
     @Override
     public void onActivityResult(int requestCode, int resultCode,
