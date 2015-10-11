@@ -76,7 +76,7 @@
         android:layout_height="wrap_content"
         android:weightSum="1">
 
-        <ImageButton
+        ImageButton
             android:layout_width="73dp"
             android:layout_height="match_parent"
             android:id="@+id/playPause"
@@ -91,17 +91,16 @@
             android:id="@+id/stop"
             android:src="@drawable/stopbutton"
             android:scaleType="fitCenter" />
-    </LinearLayout>
 
-    <android.support.design.widget.FloatingActionButton
-        android:layout_width="55dp"
-        android:layout_height="41dp"
-        android:id="@+id/playPause"
-        android:src="@drawable/play"
-        android:scaleType="fitCenter"
-        android:cropToPadding="false"
-        android:layout_weight="0.10"
-        android:layout_gravity="center_horizontal" />
+        <android.support.design.widget.FloatingActionButton
+            android:layout_width="wrap_content"
+            android:layout_height="80dp"
+            android:id="@+id/playPause"
+            android:src="@drawable/play"
+            android:scaleType="fitCenter"
+            android:cropToPadding="false"
+            android:layout_weight="0.10" />
+    </LinearLayout>
 
 
 </LinearLayout>

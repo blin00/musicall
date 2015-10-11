@@ -96,6 +96,8 @@ public class MainActivity extends AppCompatActivity {
         playPauseButton.setOnClickListener(new View.OnClickListener() {
             int pauseImg = getResources().getIdentifier("@drawable/pause", null, getPackageName());
             int playImg = getResources().getIdentifier("@drawable/play", null, getPackageName());
+
+
             @Override
             public void onClick(View v) {
                 if(mediaPlayer.isPlaying()) {
@@ -203,10 +205,12 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void resetPlayer() {
+        int pauseImg = getResources().getIdentifier("@drawable/pause", null, getPackageName());
         currentSong.setText("<none>");
         seekBar.setEnabled(false);
         playPauseButton.setEnabled(false);
         playPauseButton.setVisibility(4);
+        playPauseButton.setImageDrawable(ResourcesCompat.getDrawable(getResources(), pauseImg, null));
         mediaPlayer.reset();
     }
 
