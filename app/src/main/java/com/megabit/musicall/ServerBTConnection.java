@@ -122,7 +122,7 @@ public class ServerBTConnection extends BluetoothConnection {
             } catch (InterruptedException e) {}
             if (msg == null) continue;
             Log.i(MainActivity.TAG, "sending: " + msg.toString());
-            int delay = 20;
+            int delay = 10;
             for (DataOutputStream dos : streams) {
                 try {
                     if (msg instanceof Integer) {
@@ -132,7 +132,7 @@ public class ServerBTConnection extends BluetoothConnection {
                         dos.writeByte(1);
                         dos.writeInt(seek);
                         dos.flush();
-                        delay += 20;
+                        delay += 10;
                     } else if (msg instanceof Boolean) {
                         boolean play = (boolean) msg;
                         dos.writeByte(2);
