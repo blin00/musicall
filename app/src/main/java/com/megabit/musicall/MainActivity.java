@@ -72,19 +72,35 @@ public class MainActivity extends AppCompatActivity {
         ImageButton stopButton = (ImageButton) findViewById(R.id.stop);
 
 
-
         playPauseButton = (FloatingActionButton) findViewById(R.id.playPause);
 
         receiverButton.setOnClickListener(new View.OnClickListener() {
+
+            private boolean started = false;
+
             @Override
             public void onClick(View v) {
-                btConn.discoverDevices();
+                if (!started) {
+                    started = true;
+                    btConn.discoverDevices();
+                } else {
+                    started = false;
+                    btConn.terminateReceiverDiscovery();
+                }
             }
         });
         senderButton.setOnClickListener(new View.OnClickListener() {
+            private boolean started = false;
+
             @Override
             public void onClick(View v) {
-                btConn.receiveDiscovery();
+                if (!started) {
+                    started = true;
+                    btConn.receiveDiscovery();
+                } else {
+                    started = false;
+                    btConn.terminateSenderDiscovery();
+                }
             }
         });
         stopButton.setOnClickListener(new View.OnClickListener() {
