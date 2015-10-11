@@ -20,6 +20,10 @@ import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -33,10 +37,12 @@ public class MainActivity extends AppCompatActivity {
     private SeekBar seekBar;
     private Handler updateSeekHandler;
     private Runnable updateSeekTask;
+    private ImageButton playPauseButton;
 
     private static final int READ_REQUEST_CODE = 42;
     private static final int BT_DISCOVERABILITY_REQUEST_CODE = 41;
     private static final String TAG = "MCAL";
+    private final Context context = this;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
         Button receiverButton = (Button) findViewById(R.id.receiverButton);
         Button senderButton = (Button) findViewById(R.id.senderButton);
-        ImageButton playPauseButton = (ImageButton) findViewById(R.id.playPause);
+        playPauseButton = (ImageButton) findViewById(R.id.playPause);
         receiverButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -145,12 +151,42 @@ public class MainActivity extends AppCompatActivity {
             resetPlayer();
             return true;
         }
+        if (id == R.id.About) {
+
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                    context);
+
+            // set title
+            alertDialogBuilder.setTitle("About this App");
+
+            // set dialog message
+            alertDialogBuilder
+                    .setMessage("Syncs music across multiple phones(connected via Bluetooth) to create a Surround-Sound experience" +
+                            "\n\nCreated by: \nBrandon Lin, Zhongxia Yan \nUtsav Baral, " +
+                            "Jonathan Ngan \nEric Zhang, and Michael Zhao")
+                    .setCancelable(true)
+                    .setNegativeButton("Okay", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            // if this button is clicked, just close
+                            // the dialog box and do nothing
+                            dialog.cancel();
+                        }
+                    });
+
+            // create alert dialog
+            AlertDialog alertDialog = alertDialogBuilder.create();
+
+            // show it
+            alertDialog.show();
+        }
         return super.onOptionsItemSelected(item);
     }
 
     private void resetPlayer() {
         currentSong.setText("<none>");
         seekBar.setEnabled(false);
+        playPauseButton.setEnabled(false);
+        playPauseButton.setVisibility(4);
         mediaPlayer.reset();
     }
 
@@ -185,6 +221,8 @@ public class MainActivity extends AppCompatActivity {
                         currentSong.setText(uri.getLastPathSegment());
                         seekBar.setMax(mediaPlayer.getDuration());
                         seekBar.setEnabled(true);
+                        playPauseButton.setEnabled(true);
+                        playPauseButton.setVisibility(0);
                         Toast.makeText(getApplicationContext(), "music started", Toast.LENGTH_SHORT).show();
                         mp.start();
                     }
