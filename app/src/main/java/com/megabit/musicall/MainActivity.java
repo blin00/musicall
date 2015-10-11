@@ -6,6 +6,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -14,6 +15,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -21,7 +24,11 @@ import java.io.IOException;
 public class MainActivity extends AppCompatActivity {
 
     private MediaPlayer mediaPlayer;
-    BluetoothConnection btConn;
+    private BluetoothConnection btConn;
+    private TextView currentSong;
+    private SeekBar seekBar;
+    private Handler updateSeekHandler;
+    private Runnable updateSeekTask;
 
     private static final int READ_REQUEST_CODE = 42;
     private static final int BT_DISCOVERABILITY_REQUEST_CODE = 41;
@@ -60,6 +67,41 @@ public class MainActivity extends AppCompatActivity {
                 btConn.receiveDiscovery();
             }
         });
+        currentSong = (TextView) findViewById(R.id.currentSong);
+        seekBar = (SeekBar) findViewById(R.id.musicSeekBar);
+        resetPlayer();
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                updateSeekHandler.removeCallbacks(updateSeekTask);
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                Log.i(TAG, "done: " + seekBar.getProgress());
+                if (mediaPlayer != null) {
+                    mediaPlayer.seekTo(seekBar.getProgress());
+                    // in case playback stopped because reached end
+                    mediaPlayer.start();
+                }
+                updateSeekHandler.post(updateSeekTask);
+            }
+        });
+        updateSeekHandler = new Handler();
+        updateSeekTask = new Runnable() {
+            @Override
+            public void run() {
+                if (mediaPlayer != null) {
+                    seekBar.setProgress(mediaPlayer.getCurrentPosition());
+                }
+                updateSeekHandler.postDelayed(this, 250);
+            }
+        };
+        updateSeekHandler.post(updateSeekTask);
     }
 
     @Override
@@ -85,10 +127,16 @@ public class MainActivity extends AppCompatActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             mediaPlayer.stop();
+            resetPlayer();
             return true;
         }
-
         return super.onOptionsItemSelected(item);
+    }
+
+    private void resetPlayer() {
+        currentSong.setText("<none>");
+        seekBar.setEnabled(false);
+        mediaPlayer.reset();
     }
 
     @Override
@@ -103,16 +151,15 @@ public class MainActivity extends AppCompatActivity {
             // Instead, a URI to that document will be contained in the return intent
             // provided to this method as a parameter.
             // Pull that URI using resultData.getData().
-            Uri uri;
+            final Uri uri;
             if (resultData != null) {
                 uri = resultData.getData();
                 Log.i(TAG, "Uri: " + uri.toString());
-                mediaPlayer.reset();
+                resetPlayer();
                 mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
                 mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
                     @Override
                     public boolean onError(MediaPlayer mp, int what, int extra) {
-                        Toast.makeText(getApplicationContext(), "invalid music file (2)", Toast.LENGTH_SHORT).show();
                         Log.e(TAG, "some error occurred (" + what + ", " + extra + ")");
                         return true;
                     }
@@ -120,6 +167,9 @@ public class MainActivity extends AppCompatActivity {
                 mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                     @Override
                     public void onPrepared(MediaPlayer mp) {
+                        currentSong.setText(uri.getLastPathSegment());
+                        seekBar.setMax(mediaPlayer.getDuration());
+                        seekBar.setEnabled(true);
                         Toast.makeText(getApplicationContext(), "music started", Toast.LENGTH_SHORT).show();
                         mp.start();
                     }
@@ -137,8 +187,6 @@ public class MainActivity extends AppCompatActivity {
             //TODO?
         }
     }
-
-
 
     /**
      * Fires an intent to spin up the "file chooser" UI and select an image.

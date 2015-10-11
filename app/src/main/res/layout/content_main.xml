@@ -26,4 +26,18 @@
         android:text="Receiver"
         android:layout_width="wrap_content"
         android:layout_height="50dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Song"
+        android:id="@+id/currentSong" />
+
+    <SeekBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/musicSeekBar"
+        android:layout_gravity="center_horizontal"
+        android:indeterminate="false" />
+
 </LinearLayout>
