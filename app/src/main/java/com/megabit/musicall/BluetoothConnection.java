@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -19,78 +20,87 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class BluetoothConnection {
 
     private BluetoothAdapter mBluetoothAdapter;
     private MainActivity mCurrActivity;
-    private static final int REQUEST_ENABLE_BT = 43;
-    public static final ArrayList<UUID> uuids = new ArrayList<>();
+    private BlockingQueue<Object> messageQueue;    // URI => send file; Integer => seek (-1 is pause); nothing else allowed
+    public static final int REQUEST_ENABLE_BT = 43;
+    public static final int REQUEST_ENABLE_BT_DISCOVERABLE = 44;
+
+    public static final List<UUID> uuids;
+
+    static {
+        // cap at 3 for now
+        ArrayList<UUID> _uuids = new ArrayList<>();
+        _uuids.add(UUID.fromString("d6a3cb53-b9ea-4ea3-b0fa-04d7999d2acf"));
+        _uuids.add(UUID.fromString("d6a3cb54-b9ea-4ea3-b0fa-04d7999d2acf"));
+        _uuids.add(UUID.fromString("d6a3cb55-b9ea-4ea3-b0fa-04d7999d2acf"));
+        //_uuids.add(UUID.fromString("d6a3cb56-b9ea-4ea3-b0fa-04d7999d2acf"));
+        //_uuids.add(UUID.fromString("d6a3cb57-b9ea-4ea3-b0fa-04d7999d2acf"));
+        uuids = Collections.unmodifiableList(_uuids);
+    }
 
     public BluetoothConnection(MainActivity activity) {
         mCurrActivity = activity;
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        messageQueue = new LinkedBlockingQueue<>();
         if (mBluetoothAdapter == null) {
             Toast.makeText(activity, "bluetooth not supported", Toast.LENGTH_SHORT).show();
+            activity.finish();
         } else if (!mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             mCurrActivity.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
-        uuids.add(UUID.fromString("d6a3cb53-b9ea-4ea3-b0fa-04d7999d2acf"));
-        uuids.add(UUID.fromString("d6a3cb54-b9ea-4ea3-b0fa-04d7999d2acf"));
-        uuids.add(UUID.fromString("d6a3cb55-b9ea-4ea3-b0fa-04d7999d2acf"));
-        uuids.add(UUID.fromString("d6a3cb56-b9ea-4ea3-b0fa-04d7999d2acf"));
-        uuids.add(UUID.fromString("d6a3cb57-b9ea-4ea3-b0fa-04d7999d2acf"));
     }
 
 
 
     // server
-    private ArrayList<BluetoothSocket> mSockets = null;
+    private List<BluetoothSocket> mSockets;
     private static final int DISCOVERABLE_DURATION = 60;
-    private boolean serverDiscovering;
-    private BTAcceptThread mAcceptorThread;
+    private volatile boolean serverDiscovering = false;
+    private volatile BTAcceptThread mAcceptorThread = null;
+    private List<BTServerThread> serverThreads;
 
     private class BTAcceptThread extends Thread {
-
         public BTAcceptThread() {
             serverDiscovering = true;
+            mSockets = new ArrayList<>();
+            serverThreads = new ArrayList<>();
         }
 
+        @Override
         public void run() {
             int uuidIndex = 0;
-            while (uuidIndex < uuids.size() && serverDiscovering) {
-                BluetoothServerSocket tmpServerSocket = null;
+            mSockets.clear();
+            while (serverDiscovering && uuidIndex < uuids.size()) {
+                BluetoothServerSocket serverSocket;
+                BluetoothSocket socket;
                 try {
-                    tmpServerSocket = mBluetoothAdapter.listenUsingRfcommWithServiceRecord("musicall", uuids.get(uuidIndex));
-                } catch (IOException e) { }
-
-                BluetoothSocket socket = null;
-                // Keep listening until exception occurs or a socket is returned
-                while (true) {
-                    try {
-                        Log.i(MainActivity.TAG, "server listening to uuid: " + uuids.get(uuidIndex).toString());
-                        socket = tmpServerSocket.accept();
-                    } catch (IOException e) {
-                        break;
-                    }
-                    // If a connection was accepted
+                    serverSocket = mBluetoothAdapter.listenUsingRfcommWithServiceRecord("musicall", uuids.get(uuidIndex));
+                    Log.i(MainActivity.TAG, "server listening to uuid: " + uuids.get(uuidIndex).toString());
+                    socket = serverSocket.accept();
                     if (socket != null) {
-                        try {
-                            tmpServerSocket.close();
-                        } catch (IOException e) {
-                            break;
-                        }
-                        // Do work to manage the connection (in a separate thread)
                         mSockets.add(socket);
-                        break;
+                        serverSocket.close();
                     }
-                }
+                } catch (IOException e) {}
+
                 uuidIndex++;
+                try {
+                    sleep(100);
+                } catch (InterruptedException e) {}
             }
-            manageServerSocket(mSockets);
+            manageServerSockets();
+            mAcceptorThread = null;
         }
 
         /** Will cancel the listening socket, and cause the thread to finish */
@@ -99,47 +109,89 @@ public class BluetoothConnection {
         }
     }
 
+    private class BTServerThread extends Thread {
+        private BluetoothSocket socket;
+        private BlockingQueue<Object> queue;
+
+        public BTServerThread(BluetoothSocket socket) {
+            this.socket = socket;
+            queue = new LinkedBlockingQueue<>();
+        }
+
+        @Override
+        public void run() {
+            DataOutputStream dos;
+            try {
+                dos = new DataOutputStream(socket.getOutputStream());
+            } catch (IOException e) {
+                Log.e(MainActivity.TAG, "error: " + e.toString());
+                return;
+            }
+            while (true) {
+                Object msg = null;
+                try {
+                    msg = queue.take();
+                } catch (InterruptedException e) {}
+                if (msg == null) continue;
+                Log.i(MainActivity.TAG, "got message on serverThread: " + msg.toString());
+                if (msg instanceof Uri) {
+                    Uri file = (Uri) msg;
+                } else if (msg instanceof Integer) {
+                    int seek = (int) msg;
+                }
+            }
+        }
+
+        public void enqueue(Object msg) {
+            queue.add(msg);
+        }
+    }
+
     public void receiveDiscovery() {
         Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
         discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, DISCOVERABLE_DURATION);
-        mCurrActivity.startActivity(discoverableIntent);
-        mAcceptorThread = new BTAcceptThread();
-        new Thread(mAcceptorThread).start();
+        mCurrActivity.startActivityForResult(discoverableIntent, REQUEST_ENABLE_BT_DISCOVERABLE);
+        if (mAcceptorThread == null) {
+            mAcceptorThread = new BTAcceptThread();
+            mAcceptorThread.start();
+        } else {
+            Toast.makeText(mCurrActivity, "already accepting connections", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void terminateSenderDiscovery() {
         mAcceptorThread.finishAddingConnections();
     }
 
-    private void manageServerSocket(ArrayList<BluetoothSocket> sockets) {
-        Log.i(MainActivity.TAG, "got server sockets");
-        for (BluetoothSocket socket : sockets) {
-            try {
-                DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-                int seek;
-                while (true) {
-                    synchronized (mCurrActivity.seekQueue) {
-                        mCurrActivity.seekQueue.wait();
-                        seek = mCurrActivity.seekQueue.getAndSet(-1);
-                    }
-                    dos.writeByte(1);
-                    dos.writeInt(seek);
-                    dos.flush();
-                    Log.i(MainActivity.TAG, "wrote int " + seek);
+    private void manageServerSockets() {
+        new Thread() {
+            @Override
+            public void run() {
+                Log.i(MainActivity.TAG, "got server sockets");
+                serverThreads.clear();
+                for (BluetoothSocket socket : mSockets) {
+                    BTServerThread t = new BTServerThread(socket);
+                    t.start();
+                    serverThreads.add(t);
                 }
-                //dos.close();
-                //socket.close();
-            } catch (IOException e) {
-                Log.e(MainActivity.TAG, "error: " + e.toString());
-            } catch (InterruptedException e) {
-                // shouldn't happen
+                while (true) {
+                    Object msg = null;
+                    try {
+                        msg = messageQueue.take();
+                    } catch (InterruptedException e) {}
+                    if (msg != null) {
+                        for (BTServerThread t : serverThreads) {
+                            t.enqueue(msg);
+                        }
+                    }
+                }
             }
-        }
-
+        }.start();
     }
 
-
-
+    public void enqueue(Object msg) {
+        messageQueue.add(msg);
+    }
 
 
 
@@ -175,7 +227,7 @@ public class BluetoothConnection {
     }
 
     private class BTConnectThread extends Thread {
-
+        @Override
         public void run() {
             // Cancel discovery because it will slow down the connection
             mBluetoothAdapter.cancelDiscovery();

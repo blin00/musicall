@@ -76,15 +76,6 @@
         android:layout_height="wrap_content"
         android:weightSum="1">
 
-        ImageButton
-            android:layout_width="73dp"
-            android:layout_height="match_parent"
-            android:id="@+id/playPause"
-            android:src="@drawable/pauseplay"
-            android:scaleType="fitCenter"
-            android:cropToPadding="false"
-            android:layout_weight="0.09" />
-
         <ImageButton
             android:layout_width="89dp"
             android:layout_height="103dp"

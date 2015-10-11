@@ -39,8 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private Runnable updateSeekTask;
     public final AtomicInteger seekQueue = new AtomicInteger(-1);
 
-    private static final int READ_REQUEST_CODE = 42;
-    private static final int BT_DISCOVERABILITY_REQUEST_CODE = 41;
+    public static final int READ_REQUEST_CODE = 42;
     public static final String TAG = "Musicall";
     private FloatingActionButton playPauseButton;
 
@@ -119,7 +118,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if(mediaPlayer.isPlaying()) {
                     mediaPlayer.pause();
-
                     playPauseButton.setImageDrawable(ResourcesCompat.getDrawable(getResources(), playImg, null));
                 } else {
                     mediaPlayer.start();
@@ -144,14 +142,9 @@ public class MainActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {
                 int progress = seekBar.getProgress();
                 Log.i(TAG, "seek to: " + progress);
-                synchronized(seekQueue) {
-                    seekQueue.set(progress);
-                    seekQueue.notifyAll();
-                }
+                btConn.enqueue(progress);
                 if (mediaPlayer != null) {
                     mediaPlayer.seekTo(progress);
-                    // in case playback stopped because reached end
-                    mediaPlayer.start();
                 }
                 updateSeekHandler.post(updateSeekTask);
             }
@@ -160,14 +153,14 @@ public class MainActivity extends AppCompatActivity {
         updateSeekTask = new Runnable() {
             @Override
             public void run() {
-                if (mediaPlayer != null) {
-                    try {
-                        seekBar.setProgress(mediaPlayer.getCurrentPosition());
-                    } catch (IllegalStateException e) {
-                        // squelch
-                    }
+            if (mediaPlayer != null) {
+                try {
+                    seekBar.setProgress(mediaPlayer.getCurrentPosition());
+                } catch (IllegalStateException e) {
+                    Log.e(TAG, "warning: caught MediaPlayer ISE");
                 }
-                updateSeekHandler.postDelayed(this, 250);
+            }
+            updateSeekHandler.postDelayed(this, 250);
             }
         };
         updateSeekHandler.post(updateSeekTask);
@@ -310,7 +303,9 @@ public class MainActivity extends AppCompatActivity {
                 }
                 mediaPlayer.prepareAsync();
             }
-        } else if (requestCode == BT_DISCOVERABILITY_REQUEST_CODE && resultCode == Activity.RESULT_CANCELED) {
+        } else if (requestCode == BluetoothConnection.REQUEST_ENABLE_BT && resultCode == Activity.RESULT_CANCELED) {
+            // TODO: ?
+        } else if (requestCode == BluetoothConnection.REQUEST_ENABLE_BT_DISCOVERABLE && resultCode == Activity.RESULT_CANCELED) {
             // TODO: ?
         }
     }
@@ -335,22 +330,16 @@ public class MainActivity extends AppCompatActivity {
         mediaPlayer.seekTo(loc);
     }
 
-    public void outFile(Uri uri, BluetoothSocket socket) throws IOException {
-        BufferedInputStream bs = new BufferedInputStream(getContentResolver().openInputStream(uri));
-        OutputStream os = socket.getOutputStream();
-        try {
+    public void sendFile(Uri uri, BluetoothSocket socket) throws IOException {
+        try (BufferedInputStream bs = new BufferedInputStream(getContentResolver().openInputStream(uri)); OutputStream os = socket.getOutputStream()){
             int bufferSize = 8192;
             byte[] buffer = new byte[bufferSize];
 
-            int len = 0;
+            int len;
             while ((len = bs.read(buffer)) != -1) {
                 os.write(buffer, 0, len);
             }
-        } finally {
-            bs.close();
             os.flush();
-            os.close();
-
         }
     }
 }
