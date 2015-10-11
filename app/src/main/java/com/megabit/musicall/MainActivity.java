@@ -1,6 +1,7 @@
 package com.megabit.musicall;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -19,7 +20,9 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -202,5 +205,24 @@ public class MainActivity extends AppCompatActivity {
         intent.setType("*/*");
 
         startActivityForResult(intent, READ_REQUEST_CODE);
+    }
+
+    public void outFile(Uri uri, BluetoothSocket socket) throws IOException {
+        BufferedInputStream bs = new BufferedInputStream(getContentResolver().openInputStream(uri));
+        OutputStream os = socket.getOutputStream();
+        try {
+            int bufferSize = 8192;
+            byte[] buffer = new byte[bufferSize];
+
+            int len = 0;
+            while ((len = bs.read(buffer)) != -1) {
+                os.write(buffer, 0, len);
+            }
+        } finally {
+            bs.close();
+            os.flush();
+            os.close();
+            bs.close();
+        }
     }
 }
