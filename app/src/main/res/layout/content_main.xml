@@ -69,7 +69,7 @@
         android:layout_gravity="center_horizontal"
         android:indeterminate="false" />
 
-    <ImageButton
+    <android.support.design.widget.FloatingActionButton
         android:layout_width="55dp"
         android:layout_height="41dp"
         android:id="@+id/playPause"
