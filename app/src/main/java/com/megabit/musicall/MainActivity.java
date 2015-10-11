@@ -168,10 +168,24 @@ public class MainActivity extends AppCompatActivity {
         };
         updateSeekHandler.post(updateSeekTask);
     }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        btConn.unregisterBroadcastReceiver();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        btConn.registerBroadcastReceiver();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         mediaPlayer.release();
+        btConn.unregisterBroadcastReceiver();
     }
 
     @Override

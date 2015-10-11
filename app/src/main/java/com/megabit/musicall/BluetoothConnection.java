@@ -52,18 +52,18 @@ public class BluetoothConnection {
     // server
     private ArrayList<BluetoothSocket> mSockets = null;
     private static final int DISCOVERABLE_DURATION = 60;
-    private boolean discovering;
+    private boolean serverDiscovering;
     private BTAcceptThread mAcceptorThread;
 
     private class BTAcceptThread extends Thread {
 
         public BTAcceptThread() {
-            discovering = true;
+            serverDiscovering = true;
         }
 
         public void run() {
             int uuidIndex = 0;
-            while (uuidIndex < uuids.size() && discovering) {
+            while (uuidIndex < uuids.size() && serverDiscovering) {
                 BluetoothServerSocket tmpServerSocket = null;
                 try {
                     tmpServerSocket = mBluetoothAdapter.listenUsingRfcommWithServiceRecord("musicall", uuids.get(uuidIndex));
@@ -97,7 +97,7 @@ public class BluetoothConnection {
 
         /** Will cancel the listening socket, and cause the thread to finish */
         public void finishAddingConnections() {
-            discovering = false;
+            serverDiscovering = false;
         }
     }
 
@@ -150,20 +150,31 @@ public class BluetoothConnection {
     private ArrayList<BluetoothDevice> mDetectedDevices = null;
     private BluetoothDevice mSelectedDevice = null;
     private BluetoothSocket mSocket;
+    private boolean clientDiscovering;
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
-        String action = intent.getAction();
-        // When discovery finds a device
-        if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-            // Get the BluetoothDevice object from the Intent
-            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-            // Add the name and address to an array adapter to show in a ListView
-            mArrayAdapter.add(device.getName() + "\n" + device.getAddress());
-            mDetectedDevices.add(device);
-        }
+            String action = intent.getAction();
+            // When discovery finds a device
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                // Get the BluetoothDevice object from the Intent
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                // Add the name and address to an array adapter to show in a ListView
+                mArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+                mDetectedDevices.add(device);
+            }
         }
     };
+
+    public void registerBroadcastReceiver() {
+        // Register the BroadcastReceiver
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        mCurrActivity.registerReceiver(mReceiver, filter); // Don't forget to unregister during onDestroy
+    }
+
+    public void unregisterBroadcastReceiver() {
+        mCurrActivity.unregisterReceiver(mReceiver);
+    }
 
     private class BTConnectThread extends Thread {
 
@@ -172,7 +183,7 @@ public class BluetoothConnection {
             mBluetoothAdapter.cancelDiscovery();
             mSocket = null;
             int uuidIndex = 0;
-            while (mSocket == null && discovering) {
+            while (mSocket == null && clientDiscovering) {
                 // Get a BluetoothSocket to connect with the given BluetoothDevice
                 try {
                     mSocket = mSelectedDevice.createRfcommSocketToServiceRecord(uuids.get(uuidIndex));
@@ -190,7 +201,9 @@ public class BluetoothConnection {
             }
 
             // Do work to manage the connection (in a separate thread)
-            manageClientSocket(mSocket);
+            if (mSocket != null) {
+                manageClientSocket(mSocket);
+            }
         }
 
         /** Will cancel an in-progress connection, and close the socket */
@@ -223,29 +236,14 @@ public class BluetoothConnection {
                 btConnect();
             }
         });
-        // Register the BroadcastReceiver
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        mCurrActivity.registerReceiver(mReceiver, filter); // Don't forget to unregister during onDestroy
+        registerBroadcastReceiver();
+
         mBluetoothAdapter.startDiscovery();
-        discovering = true;
+        clientDiscovering = true;
     }
 
     public void btConnect() {
         new Thread(new BTConnectThread()).start();
-        new CountDownTimer(2000, 1000) {
-
-            public void onTick(long millisUntilFinished) {
-            }
-
-            public void onFinish() {
-                if (!mSocket.isConnected()) {
-                    try {
-                        mSocket.close();
-                    } catch (IOException closeException) {
-                    }
-                }
-            }
-        }.start();
     }
 
     private void manageClientSocket(BluetoothSocket socket) {
@@ -267,7 +265,7 @@ public class BluetoothConnection {
     }
 
     public void terminateReceiverDiscovery() {
-        discovering = false;
+        clientDiscovering = false;
     }
 
 }
