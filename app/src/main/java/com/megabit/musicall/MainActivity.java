@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
         Button receiverButton = (Button) findViewById(R.id.receiverButton);
         Button senderButton = (Button) findViewById(R.id.senderButton);
+        Button playPauseButton = (Button) findViewById(R.id.playPause);
         receiverButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -68,6 +69,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 btConn.receiveDiscovery();
+            }
+        });
+        playPauseButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                btConn.discoverDevices();
             }
         });
         currentSong = (TextView) findViewById(R.id.currentSong);
