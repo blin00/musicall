@@ -20,19 +20,22 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainActivity extends AppCompatActivity {
-
     private MediaPlayer mediaPlayer;
     private BluetoothConnection btConn;
     private TextView currentSong;
     private SeekBar seekBar;
     private Handler updateSeekHandler;
     private Runnable updateSeekTask;
+    public final AtomicInteger seekQueue = new AtomicInteger(-1);
 
     private static final int READ_REQUEST_CODE = 42;
     private static final int BT_DISCOVERABILITY_REQUEST_CODE = 41;
-    private static final String TAG = "MCAL";
+    public static final String TAG = "Musicall";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,9 +85,14 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                Log.i(TAG, "done: " + seekBar.getProgress());
+                int progress = seekBar.getProgress();
+                Log.i(TAG, "seek to: " + progress);
+                synchronized(seekQueue) {
+                    seekQueue.set(progress);
+                    seekQueue.notifyAll();
+                }
                 if (mediaPlayer != null) {
-                    mediaPlayer.seekTo(seekBar.getProgress());
+                    mediaPlayer.seekTo(progress);
                     // in case playback stopped because reached end
                     mediaPlayer.start();
                 }
@@ -124,7 +132,6 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             mediaPlayer.stop();
             resetPlayer();
@@ -177,14 +184,14 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     mediaPlayer.setDataSource(getApplicationContext(), uri);
                 } catch (IOException e) {
-                    Toast.makeText(getApplicationContext(), "invalid music file (1)", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "invalid music file", Toast.LENGTH_SHORT).show();
                     Log.e(TAG, "invalid data source");
                     return;
                 }
                 mediaPlayer.prepareAsync();
             }
         } else if (requestCode == BT_DISCOVERABILITY_REQUEST_CODE && resultCode == Activity.RESULT_CANCELED) {
-            //TODO?
+            // TODO: ?
         }
     }
 
@@ -202,5 +209,9 @@ public class MainActivity extends AppCompatActivity {
         intent.setType("*/*");
 
         startActivityForResult(intent, READ_REQUEST_CODE);
+    }
+
+    public void seekTo(int loc) {
+        mediaPlayer.seekTo(loc);
     }
 }
