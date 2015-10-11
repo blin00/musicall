@@ -61,7 +61,7 @@ public class ServerBTConnection extends BluetoothConnection {
                         tmpServerSocket.close();
                         currentReceiverListHeight = Math.min(currentReceiverListHeight + 40, maxReceiverListHeight);
                         BluetoothDevice device = socket.getRemoteDevice();
-                        mArrayAdapter.add(Integer.toString(uuidIndex) +  ") " +  device.getName() + " " + device.getAddress());
+                        mArrayAdapter.add(Integer.toString(uuidIndex + 1) +  ") " +  device.getName() + " " + device.getAddress());
                         mArrayAdapter.notifyDataSetChanged();
                     }
                 } catch (IOException e) {}
