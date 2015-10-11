@@ -122,13 +122,17 @@ public class ServerBTConnection extends BluetoothConnection {
             } catch (InterruptedException e) {}
             if (msg == null) continue;
             Log.i(MainActivity.TAG, "sending: " + msg.toString());
+            int delay = 20;
             for (DataOutputStream dos : streams) {
                 try {
                     if (msg instanceof Integer) {
                         int seek = (int) msg;
+                        seek -= delay;
+                        if (seek < 0) seek = 0;
                         dos.writeByte(1);
                         dos.writeInt(seek);
                         dos.flush();
+                        delay += 20;
                     } else if (msg instanceof Boolean) {
                         boolean play = (boolean) msg;
                         dos.writeByte(2);
@@ -137,8 +141,7 @@ public class ServerBTConnection extends BluetoothConnection {
                     } else if (msg instanceof Uri) {
                         Uri file = (Uri) msg;
                         dos.writeByte(0);
-                        dos.flush();
-                        //mCurrActivity.sendFile(file, dos);
+                        mCurrActivity.sendFile(file, dos);
                     }
                 } catch (IOException e) {
                     Log.e(MainActivity.TAG, "error: " + e.toString());

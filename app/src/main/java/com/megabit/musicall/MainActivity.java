@@ -27,6 +27,10 @@ import android.widget.Toast;
 
 import java.io.BufferedInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -272,6 +276,67 @@ public class MainActivity extends AppCompatActivity {
         mediaPlayer.reset();
     }
 
+    public void setSourceToArray(byte[] buf) {
+        try {
+            // create temp file that will hold byte array
+            File tmpFile = File.createTempFile("music", "ogg", getCacheDir());
+            tmpFile.deleteOnExit();
+            FileOutputStream fos = new FileOutputStream(tmpFile);
+            fos.write(buf);
+            fos.close();
+            FileInputStream fis = new FileInputStream(tmpFile);
+            setSource(fis.getFD());
+        } catch (IOException e) {}
+    }
+
+    // must be called with Uri or FileDescriptor
+    private void setSource(Object thing) {
+        final String displayText;
+        final Uri uri;
+        if (thing instanceof Uri) {
+            uri = (Uri) thing;
+            displayText = uri.getLastPathSegment();
+        } else {
+            displayText = "<from receiver>";
+            uri = null;
+        }
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                Log.e(TAG, "some error occurred (" + what + ", " + extra + ")");
+                return true;
+            }
+        });
+        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                currentSong.setText(displayText);
+                seekBar.setMax(mediaPlayer.getDuration());
+                seekBar.setEnabled(true);
+                playPauseButton.setEnabled(true);
+                stopButton.setEnabled(true);
+                stopButton.setVisibility(View.VISIBLE);
+                playPauseButton.setVisibility(View.VISIBLE);
+                Toast.makeText(getApplicationContext(), "music loaded", Toast.LENGTH_SHORT).show();
+                mp.start();
+                setPlaying(false);
+            }
+        });
+        try {
+            if (uri != null) {
+                mediaPlayer.setDataSource(getApplicationContext(), uri);
+                serverBTConn.enqueue(uri);
+            } else {
+                mediaPlayer.setDataSource((FileDescriptor) thing);
+            }
+        } catch (IOException e) {
+            Toast.makeText(getApplicationContext(), "invalid music file", Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "invalid data source");
+            return;
+        }
+        mediaPlayer.prepareAsync();
+    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode,
@@ -285,43 +350,12 @@ public class MainActivity extends AppCompatActivity {
             // Instead, a URI to that document will be contained in the return intent
             // provided to this method as a parameter.
             // Pull that URI using resultData.getData().
-            final Uri uri;
+            Uri uri;
             if (resultData != null) {
                 uri = resultData.getData();
                 Log.i(TAG, "Uri: " + uri.toString());
                 resetPlayer();
-                mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                    @Override
-                    public boolean onError(MediaPlayer mp, int what, int extra) {
-                        Log.e(TAG, "some error occurred (" + what + ", " + extra + ")");
-                        return true;
-                    }
-                });
-                mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                    @Override
-                    public void onPrepared(MediaPlayer mp) {
-                        currentSong.setText(uri.getLastPathSegment());
-                        seekBar.setMax(mediaPlayer.getDuration());
-                        seekBar.setEnabled(true);
-                        playPauseButton.setEnabled(true);
-                        stopButton.setEnabled(true);
-                        stopButton.setVisibility(View.VISIBLE);
-                        playPauseButton.setVisibility(View.VISIBLE);
-                        //Toast.makeText(getApplicationContext(), "music started", Toast.LENGTH_SHORT).show();
-                        mp.start();
-                        setPlaying(false);
-                    }
-                });
-                try {
-                    mediaPlayer.setDataSource(getApplicationContext(), uri);
-                    serverBTConn.enqueue(uri);
-                } catch (IOException e) {
-                    Toast.makeText(getApplicationContext(), "invalid music file", Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "invalid data source");
-                    return;
-                }
-                mediaPlayer.prepareAsync();
+                setSource(uri);
             }
         } else if (requestCode == BluetoothConnection.REQUEST_ENABLE_BT && resultCode == Activity.RESULT_CANCELED) {
             // TODO: ?
@@ -361,7 +395,7 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "sending file...");
         os.writeInt((int) fileSize);
         try (BufferedInputStream bs = new BufferedInputStream(getContentResolver().openInputStream(uri))){
-            final int bufferSize = 1024;
+            final int bufferSize = 2048;
             byte[] buffer = new byte[bufferSize];
 
             int len;
