@@ -1,6 +1,7 @@
 package com.megabit.musicall;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -15,6 +16,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,7 +25,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -60,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
         Button receiverButton = (Button) findViewById(R.id.receiverButton);
         Button senderButton = (Button) findViewById(R.id.senderButton);
+        ImageButton playPauseButton = (ImageButton) findViewById(R.id.playPause);
         receiverButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -70,6 +75,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 btConn.receiveDiscovery();
+            }
+        });
+        playPauseButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mediaPlayer.isPlaying()) {
+                    mediaPlayer.pause();
+                } else {
+                    mediaPlayer.start();
+                }
             }
         });
         currentSong = (TextView) findViewById(R.id.currentSong);
@@ -235,5 +250,24 @@ public class MainActivity extends AppCompatActivity {
         intent.setType("*/*");
 
         startActivityForResult(intent, READ_REQUEST_CODE);
+    }
+
+    public void outFile(Uri uri, BluetoothSocket socket) throws IOException {
+        BufferedInputStream bs = new BufferedInputStream(getContentResolver().openInputStream(uri));
+        OutputStream os = socket.getOutputStream();
+        try {
+            int bufferSize = 8192;
+            byte[] buffer = new byte[bufferSize];
+
+            int len = 0;
+            while ((len = bs.read(buffer)) != -1) {
+                os.write(buffer, 0, len);
+            }
+        } finally {
+            bs.close();
+            os.flush();
+            os.close();
+            bs.close();
+        }
     }
 }

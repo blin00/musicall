@@ -10,12 +10,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.Handler;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Set;
@@ -200,6 +202,7 @@ public class BluetoothConnection {
         //TODO
         //close socket when done
     }
+
 
     /**
      * Attempts to connect to other device within BT_SCAN_PERIOD
