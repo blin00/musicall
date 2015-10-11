@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
         final Button senderButton = (Button) findViewById(R.id.senderButton);
 
 
-        ImageButton stopButton = (ImageButton) findViewById(R.id.stop);
+        //ImageButton stopButton = (ImageButton) findViewById(R.id.stop);
 
 
         playPauseButton = (FloatingActionButton) findViewById(R.id.playPause);
@@ -154,8 +154,6 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (mediaPlayer != null) {
                     mediaPlayer.seekTo(progress);
-                    // in case playback stopped because reached end
-                    mediaPlayer.start();
                 }
                 updateSeekHandler.post(updateSeekTask);
             }
@@ -262,7 +260,8 @@ public class MainActivity extends AppCompatActivity {
         currentSong.setText("<none>");
         seekBar.setEnabled(false);
         playPauseButton.setEnabled(false);
-        stop
+        stopButton.setEnabled(false);
+        stopButton.setVisibility(View.INVISIBLE);
         playPauseButton.setVisibility(View.INVISIBLE);
         playPauseButton.setImageDrawable(ResourcesCompat.getDrawable(getResources(), pauseImg, null));
         mediaPlayer.reset();
@@ -301,6 +300,8 @@ public class MainActivity extends AppCompatActivity {
                         seekBar.setMax(mediaPlayer.getDuration());
                         seekBar.setEnabled(true);
                         playPauseButton.setEnabled(true);
+                        stopButton.setEnabled(true);
+                        stopButton.setVisibility(View.VISIBLE);
                         playPauseButton.setVisibility(View.VISIBLE);
                         Toast.makeText(getApplicationContext(), "music started", Toast.LENGTH_SHORT).show();
                         mp.start();
