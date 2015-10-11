@@ -51,7 +51,7 @@
             android:layout_width="64dp"
             android:layout_height="match_parent"
             android:id="@+id/imageView"
-            android:src="@drawable/speaker_512"
+            android:src="@drawable/volume"
             android:scaleType="fitCenter" />
 
     </LinearLayout>
@@ -68,6 +68,7 @@
         android:id="@+id/musicSeekBar"
         android:layout_gravity="center_horizontal"
         android:indeterminate="false" />
+
 
     <LinearLayout
         android:orientation="horizontal"
@@ -91,5 +92,16 @@
             android:src="@drawable/stopbutton"
             android:scaleType="fitCenter" />
     </LinearLayout>
+
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="55dp"
+        android:layout_height="41dp"
+        android:id="@+id/playPause"
+        android:src="@drawable/play"
+        android:scaleType="fitCenter"
+        android:cropToPadding="false"
+        android:layout_weight="0.10"
+        android:layout_gravity="center_horizontal" />
+
 
 </LinearLayout>
