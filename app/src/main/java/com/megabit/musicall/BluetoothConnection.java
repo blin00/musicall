@@ -1,5 +1,6 @@
 package com.megabit.musicall;
 
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
@@ -227,23 +228,27 @@ public class BluetoothConnection {
                 mDetectedDevices.add(device);
             }
         }
-        final ListView listview = (ListView) mCurrActivity.findViewById(R.id.listview);
+        final ListView listview = new ListView(mCurrActivity);
         listview.setAdapter(mArrayAdapter);
+        AlertDialog.Builder builder = new AlertDialog.Builder(mCurrActivity);
+        builder.setTitle("Devices");
+        builder.setView(listview);
+        final AlertDialog dialog = builder.create();
+        dialog.show();
+
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> l, View v, int position, long id) {
-                System.out.println(position);
+                if(dialog.isShowing()) {
+                    dialog.dismiss();
+                }
                 mSelectedDevice = mDetectedDevices.get(position);
-                btConnect();
+                new Thread(new BTConnectThread()).start();
             }
         });
         registerBroadcastReceiver();
 
         mBluetoothAdapter.startDiscovery();
         clientDiscovering = true;
-    }
-
-    public void btConnect() {
-        new Thread(new BTConnectThread()).start();
     }
 
     private void manageClientSocket(BluetoothSocket socket) {
