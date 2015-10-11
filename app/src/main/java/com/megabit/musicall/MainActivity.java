@@ -33,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private SeekBar seekBar;
     private Handler updateSeekHandler;
     private Runnable updateSeekTask;
+    private ImageButton playPauseButton;
 
     private static final int READ_REQUEST_CODE = 42;
     private static final int BT_DISCOVERABILITY_REQUEST_CODE = 41;
@@ -59,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
 
         Button receiverButton = (Button) findViewById(R.id.receiverButton);
         Button senderButton = (Button) findViewById(R.id.senderButton);
-        ImageButton playPauseButton = (ImageButton) findViewById(R.id.playPause);
+        playPauseButton = (ImageButton) findViewById(R.id.playPause);
         receiverButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -151,6 +152,8 @@ public class MainActivity extends AppCompatActivity {
     private void resetPlayer() {
         currentSong.setText("<none>");
         seekBar.setEnabled(false);
+        playPauseButton.setEnabled(false);
+        playPauseButton.setVisibility(4);
         mediaPlayer.reset();
     }
 
@@ -185,6 +188,8 @@ public class MainActivity extends AppCompatActivity {
                         currentSong.setText(uri.getLastPathSegment());
                         seekBar.setMax(mediaPlayer.getDuration());
                         seekBar.setEnabled(true);
+                        playPauseButton.setEnabled(true);
+                        playPauseButton.setVisibility(0);
                         Toast.makeText(getApplicationContext(), "music started", Toast.LENGTH_SHORT).show();
                         mp.start();
                     }
