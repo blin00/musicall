@@ -12,8 +12,10 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Set;
@@ -140,10 +142,24 @@ public class ClientBTConnection extends BluetoothConnection{
                     boolean playing = dis.readBoolean();
                     mCurrActivity.setPlaying(playing);
                 } else if (cmd == 0) {
-                    //int size = dis.readInt();
-                    //Log.i(MainActivity.TAG, "file size: " + size);
-                    //byte[] buf = new byte[size];
-                    //dis.read(buf);
+                    mCurrActivity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(mCurrActivity, "loading file", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    int size = dis.readInt();
+                    Log.i(MainActivity.TAG, "file size: " + size);
+                    byte[] buf = new byte[size];
+                    int offset = 0;
+                    while (size > 0) {
+                        int read = dis.read(buf, offset, size);
+                        if (read == -1) throw new EOFException("file smaller than expected");
+                        offset += read;
+                        size -= read;
+                    }
+                    Log.i(MainActivity.TAG, "done reading file");
+                    mCurrActivity.setSourceToArray(buf);
                 } else {
                     break;
                 }

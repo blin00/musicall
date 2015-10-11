@@ -137,8 +137,7 @@ public class ServerBTConnection extends BluetoothConnection {
                     } else if (msg instanceof Uri) {
                         Uri file = (Uri) msg;
                         dos.writeByte(0);
-                        dos.flush();
-                        //mCurrActivity.sendFile(file, dos);
+                        mCurrActivity.sendFile(file, dos);
                     }
                 } catch (IOException e) {
                     Log.e(MainActivity.TAG, "error: " + e.toString());
