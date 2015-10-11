@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.net.Uri;
 import android.util.Log;
 
 import java.io.DataOutputStream;
@@ -84,6 +85,7 @@ public class ServerBTConnection extends BluetoothConnection {
 
     private void manageServerSocket(ArrayList<BluetoothSocket> sockets) {
         Log.i(MainActivity.TAG, "got server sockets");
+        messageQueue.clear();
         ArrayList<DataOutputStream> streams = new ArrayList<>();
         for (BluetoothSocket s : sockets) {
             try {
@@ -96,6 +98,7 @@ public class ServerBTConnection extends BluetoothConnection {
                 msg = messageQueue.take();
             } catch (InterruptedException e) {}
             if (msg == null) continue;
+            Log.i(MainActivity.TAG, "sending: " + msg.toString());
             for (DataOutputStream dos : streams) {
                 try {
                     if (msg instanceof Integer) {
@@ -103,7 +106,16 @@ public class ServerBTConnection extends BluetoothConnection {
                         dos.writeByte(1);
                         dos.writeInt(seek);
                         dos.flush();
-                        Log.i(MainActivity.TAG, "wrote int " + seek);
+                    } else if (msg instanceof Boolean) {
+                        boolean play = (boolean) msg;
+                        dos.writeByte(2);
+                        dos.writeBoolean(play);
+                        dos.flush();
+                    } else if (msg instanceof Uri) {
+                        Uri file = (Uri) msg;
+                        dos.writeByte(0);
+                        dos.flush();
+                        //mCurrActivity.sendFile(file, dos);
                     }
                 } catch (IOException e) {
                     Log.e(MainActivity.TAG, "error: " + e.toString());

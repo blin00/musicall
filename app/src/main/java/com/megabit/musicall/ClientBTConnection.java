@@ -136,7 +136,17 @@ public class ClientBTConnection extends BluetoothConnection{
                 Log.i(MainActivity.TAG, "read cmd: " + cmd);
                 if (cmd == 1) { // seek
                     mCurrActivity.seekTo(dis.readInt());
-                } else break;
+                } else if (cmd == 2) {
+                    boolean playing = dis.readBoolean();
+                    mCurrActivity.setPlaying(playing);
+                } else if (cmd == 0) {
+                    //int size = dis.readInt();
+                    //Log.i(MainActivity.TAG, "file size: " + size);
+                    //byte[] buf = new byte[size];
+                    //dis.read(buf);
+                } else {
+                    break;
+                }
             }
             dis.close();
             socket.close();

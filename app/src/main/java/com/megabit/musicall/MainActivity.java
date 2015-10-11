@@ -2,15 +2,16 @@ package com.megabit.musicall;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.OpenableColumns;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -25,8 +26,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainActivity extends AppCompatActivity {
@@ -37,14 +38,13 @@ public class MainActivity extends AppCompatActivity {
     private SeekBar seekBar;
     private Handler updateSeekHandler;
     private Runnable updateSeekTask;
-    public final AtomicInteger seekQueue = new AtomicInteger(-1);
-
-    public static final int READ_REQUEST_CODE = 42;
-    public static final String TAG = "Musicall";
+    private int pauseImg;
+    private int playImg;
     private FloatingActionButton playPauseButton;
     private FloatingActionButton stopButton;
 
-    private final Context context = this;
+    public static final int READ_REQUEST_CODE = 42;
+    public static final String TAG = "Musicall";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,21 +113,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         playPauseButton.setOnClickListener(new View.OnClickListener() {
-            int pauseImg = getResources().getIdentifier("@drawable/pause", null, getPackageName());
-            int playImg = getResources().getIdentifier("@drawable/play", null, getPackageName());
-
-
             @Override
             public void onClick(View v) {
-                if(mediaPlayer.isPlaying()) {
-                    mediaPlayer.pause();
-                    playPauseButton.setImageDrawable(ResourcesCompat.getDrawable(getResources(), playImg, null));
-                } else {
-                    mediaPlayer.start();
-                    playPauseButton.setImageDrawable(ResourcesCompat.getDrawable(getResources(), pauseImg, null));
-                }
+                boolean currPlaying = mediaPlayer.isPlaying();
+                serverBTConn.enqueue(!currPlaying);
+                setPlaying(!currPlaying);
             }
         });
+
+        pauseImg = getResources().getIdentifier("@drawable/pause", null, getPackageName());
+        playImg = getResources().getIdentifier("@drawable/play", null, getPackageName());
+
         currentSong = (TextView) findViewById(R.id.currentSong);
         seekBar = (SeekBar) findViewById(R.id.musicSeekBar);
         resetPlayer();
@@ -144,7 +140,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 int progress = seekBar.getProgress();
-                Log.i(TAG, "seek to: " + progress);
                 serverBTConn.enqueue(progress);
                 if (mediaPlayer != null) {
                     mediaPlayer.seekTo(progress);
@@ -167,6 +162,24 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         updateSeekHandler.post(updateSeekTask);
+        //clientBTConn.registerBroadcastReceiver();
+    }
+
+    public void setPlaying(final boolean playing) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (playing) {
+                    Log.i(TAG, "playing");
+                    mediaPlayer.start();
+                    playPauseButton.setImageDrawable(ResourcesCompat.getDrawable(getResources(), pauseImg, null));
+                } else {
+                    Log.i(TAG, "pausing");
+                    mediaPlayer.pause();
+                    playPauseButton.setImageDrawable(ResourcesCompat.getDrawable(getResources(), playImg, null));
+                }
+            }
+        });
     }
 
     @Override
@@ -204,8 +217,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (id == R.id.Credits) {
 
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    context);
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
 
             // set title
             alertDialogBuilder.setTitle("People who contributed to this app:");
@@ -231,8 +243,7 @@ public class MainActivity extends AppCompatActivity {
         }
         if (id == R.id.About) {
 
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    context);
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
             alertDialogBuilder.setTitle("About this App");
             alertDialogBuilder
                     .setMessage("Syncs music across multiple phones(connected via Bluetooth) to create a Surround-Sound experience")
@@ -297,12 +308,14 @@ public class MainActivity extends AppCompatActivity {
                         stopButton.setEnabled(true);
                         stopButton.setVisibility(View.VISIBLE);
                         playPauseButton.setVisibility(View.VISIBLE);
-                        Toast.makeText(getApplicationContext(), "music started", Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(getApplicationContext(), "music started", Toast.LENGTH_SHORT).show();
                         mp.start();
+                        setPlaying(false);
                     }
                 });
                 try {
                     mediaPlayer.setDataSource(getApplicationContext(), uri);
+                    serverBTConn.enqueue(uri);
                 } catch (IOException e) {
                     Toast.makeText(getApplicationContext(), "invalid music file", Toast.LENGTH_SHORT).show();
                     Log.e(TAG, "invalid data source");
@@ -337,9 +350,18 @@ public class MainActivity extends AppCompatActivity {
         mediaPlayer.seekTo(loc);
     }
 
-    public void sendFile(Uri uri, BluetoothSocket socket) throws IOException {
-        try (BufferedInputStream bs = new BufferedInputStream(getContentResolver().openInputStream(uri)); OutputStream os = socket.getOutputStream()){
-            int bufferSize = 8192;
+    public void sendFile(Uri uri, DataOutputStream os) throws IOException {
+        Cursor cursor = getContentResolver().query(uri, null, null, null, null, null);
+        int sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
+        cursor.moveToFirst();
+        long fileSize = cursor.getLong(sizeIndex);
+        if (fileSize > Integer.MAX_VALUE) {
+            throw new IOException("file too large");
+        }
+        Log.i(TAG, "sending file...");
+        os.writeInt((int) fileSize);
+        try (BufferedInputStream bs = new BufferedInputStream(getContentResolver().openInputStream(uri))){
+            final int bufferSize = 1024;
             byte[] buffer = new byte[bufferSize];
 
             int len;
@@ -348,5 +370,6 @@ public class MainActivity extends AppCompatActivity {
             }
             os.flush();
         }
+        Log.i(TAG, "done sending file");
     }
 }
