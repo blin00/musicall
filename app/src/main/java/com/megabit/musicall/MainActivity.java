@@ -159,9 +159,9 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(intent, READ_REQUEST_CODE);
     }
 
-    public void outFile(Uri uri, BluetoothSocket socketOut) throws IOException {
+    public void outFile(Uri uri, BluetoothSocket socket) throws IOException {
         BufferedInputStream bs = new BufferedInputStream(getContentResolver().openInputStream(uri));
-        OutputStream os = socketOut.getOutputStream();
+        OutputStream os = socket.getOutputStream();
         try {
             int bufferSize = 8192;
             byte[] buffer = new byte[bufferSize];
