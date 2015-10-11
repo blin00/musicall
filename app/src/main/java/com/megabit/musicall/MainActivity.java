@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
     private SeekBar seekBar;
     private Handler updateSeekHandler;
     private Runnable updateSeekTask;
-    private ImageButton playPauseButton;
+    private FloatingActionButton playPauseButton;
 
     private static final int READ_REQUEST_CODE = 42;
     private static final int BT_DISCOVERABILITY_REQUEST_CODE = 41;
@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
         Button receiverButton = (Button) findViewById(R.id.receiverButton);
         Button senderButton = (Button) findViewById(R.id.senderButton);
-        playPauseButton = (ImageButton) findViewById(R.id.playPause);
+        playPauseButton = (FloatingActionButton) findViewById(R.id.playPause);
         receiverButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -83,8 +83,10 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if(mediaPlayer.isPlaying()) {
                     mediaPlayer.pause();
+                    //playPauseButton.setImageDrawable(getResources().getDrawable(R.drawable.play));
                 } else {
                     mediaPlayer.start();
+                    //playPauseButton.setImageDrawable(getResources().getDrawable(R.drawable.pause));
                 }
             }
         });
