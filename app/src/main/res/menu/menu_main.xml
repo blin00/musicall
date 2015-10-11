@@ -5,5 +5,11 @@
         android:title="@string/About"
         android:showAsAction="ifRoom|withText"
         />
+    <item
+        android:id="@+id/Credits"
+        android:title="@string/Credits"
+        android:showAsAction="ifRoom|withText"
+        />
+
 
 </menu>
