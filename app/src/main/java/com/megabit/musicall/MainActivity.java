@@ -209,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
         currentSong.setText("<none>");
         seekBar.setEnabled(false);
         playPauseButton.setEnabled(false);
-        playPauseButton.setVisibility(4);
+        playPauseButton.setVisibility(View.INVISIBLE);
         playPauseButton.setImageDrawable(ResourcesCompat.getDrawable(getResources(), pauseImg, null));
         mediaPlayer.reset();
     }
@@ -247,7 +247,7 @@ public class MainActivity extends AppCompatActivity {
                         seekBar.setMax(mediaPlayer.getDuration());
                         seekBar.setEnabled(true);
                         playPauseButton.setEnabled(true);
-                        playPauseButton.setVisibility(0);
+                        playPauseButton.setVisibility(View.VISIBLE);
                         Toast.makeText(getApplicationContext(), "music started", Toast.LENGTH_SHORT).show();
                         mp.start();
                     }
